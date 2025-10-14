@@ -1,0 +1,10 @@
+{
+	"login": {
+		"email": "E-Mail",
+		"password": "Passwort",
+		"button": "Anmelden"
+	},
+	"home": {
+		"welcome": "Willkommen, {user}!"
+	}
+}
