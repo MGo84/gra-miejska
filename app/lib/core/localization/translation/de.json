@@ -1,0 +1,29 @@
+{
+	"login": {
+		"email": "E-Mail",
+		"password": "Passwort",
+		"button": "Anmelden",
+		"no_account": "Kein Konto? Registrieren",
+		"error": "Ungültiger Login oder Passwort"
+	},
+	"register": {
+		"title": "Registrierung",
+		"button": "Registrieren",
+		"success": "Registrierung erfolgreich!"
+	},
+	"home": {
+		"welcome": "Willkommen, {user}!"
+	},
+	"games": {
+		"list": "Spieleliste",
+		"details": "Spieldetails",
+		"duration": "Dauer: {min} Min",
+		"points": "Punkte: {points}",
+		"start": "Spiel starten",
+		"map": "Auf der Karte anzeigen"
+	},
+	"map": {
+		"title": "Spielkarte",
+		"close": "Schließen"
+	}
+}

@@ -1,0 +1,21 @@
+[
+  {
+    "id": 1,
+    "name": "Plac Or³a Bia³ego",
+    "lat": 53.428,
+    "lng": 14.553,
+    "type": "quiz",
+    "question": "Jakie zwierzê jest w herbie Polski?",
+    "answers": ["Lew", "Orze³", "Wilk", "¯ubr"],
+    "correct": 1
+  },
+  {
+    "id": 2,
+    "name": "Pomnik Mickiewicza",
+    "lat": 53.427,
+    "lng": 14.551,
+    "type": "text",
+    "question": "Jak ma na imiê Mickiewicz?",
+    "correct_text": "Adam"
+  }
+]
