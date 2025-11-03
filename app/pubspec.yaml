@@ -36,6 +36,8 @@ dependencies:
   hive_flutter: ^1.1.0
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
+  geolocator: ^14.0.2
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +66,8 @@ flutter:
     - lib/core/localization/translation/
     - lib/fonts/Roboto-Regular.ttf
     - lib/fonts/Roboto-Bold.ttf
+    - assets/images/
+    - assets/missions.json
   fonts:
     - family: Roboto
       fonts:

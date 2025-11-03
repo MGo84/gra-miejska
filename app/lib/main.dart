@@ -1,37 +1,46 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'dart:convert' show jsonDecode;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'services/local_storage_service.dart';
+import 'screens/game_list_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/game_intro_screen.dart';
+import 'screens/game_map_screen.dart';
+import 'screens/faction_selection_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/choice_game_screen.dart';
+import 'screens/text_challenge_screen.dart';
+import 'screens/inventory_screen.dart';
+import 'package:provider/provider.dart';
+import 'providers/gps_provider_wrapper.dart';
+import 'providers/game_progress_provider_wrapper.dart';
+import 'providers/settings_provider.dart';
+import 'screens/settings_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/mission_runner_screen.dart';
+// ...existing code...
 
 void main() async {
-  // Global Flutter error handler to capture uncaught framework errors.
-  FlutterError.onError = (FlutterErrorDetails details) {
-    debugPrint('FlutterError: ${details.exceptionAsString()}');
-    debugPrint(details.stack?.toString());
-  };
-
-  // Catch any uncaught async errors and ensure initialization happens inside
-  // the same zone as runApp to avoid the 'Zone mismatch' warning.
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await EasyLocalization.ensureInitialized();
-
-    runApp(
-      EasyLocalization(
-        supportedLocales: const [Locale('pl'), Locale('en'), Locale('de')],
-        path: 'lib/core/localization/translation',
-        fallbackLocale: const Locale('pl'),
-        startLocale: const Locale('pl'),
-        child: const MyApp(),
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  await EasyLocalization.ensureInitialized();
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('pl'), Locale('en'), Locale('de')],
+      path: 'lib/core/localization/translation',
+      fallbackLocale: const Locale('pl'),
+      startLocale: const Locale('pl'),
+      child: GpsProviderWrapper(
+        child: GameProgressProviderWrapper(
+          child: ChangeNotifierProvider(
+            create: (_) => SettingsProvider(),
+            child: const MyApp(),
+          ),
+        ),
       ),
-    );
-  }, (error, stack) {
-    debugPrint('Uncaught async error: $error');
-    debugPrint(stack.toString());
-  });
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -44,7 +53,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Locale? _savedLocale;
   bool _loading = true;
-  bool _didPrintLocale = false;
+  bool _showSplash = true;
 
   @override
   void initState() {
@@ -53,6 +62,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _loadLocale() async {
+    // Splash przez ~5 sekund
+    await Future.delayed(const Duration(seconds: 5));
+    setState(() {
+      _showSplash = false;
+    });
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString('locale_code');
     if (code != null) {
@@ -60,7 +74,6 @@ class _MyAppState extends State<MyApp> {
         _savedLocale = Locale(code);
         _loading = false;
       });
-      // ignore: use_build_context_synchronously
       context.setLocale(Locale(code));
     } else {
       setState(() {
@@ -71,51 +84,138 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
-
-    // One-time debug dump to inspect loaded locale and translations.
-    if (!_didPrintLocale) {
-      _didPrintLocale = true;
-      try {
-        debugPrint('DEBUG: current locale=${context.locale}');
-        debugPrint('DEBUG: supported locales=${context.supportedLocales}');
-        debugPrint('DEBUG: tr(login.email)=' + 'login.email'.tr());
-        debugPrint('DEBUG: tr(login.password)=' + 'login.password'.tr());
-        debugPrint('DEBUG: tr(login.button)=' + 'login.button'.tr());
-        debugPrint('DEBUG: tr(login.no_account)=' + 'login.no_account'.tr());
-        debugPrint('DEBUG: tr(home.welcome)=' + 'home.welcome'.tr(namedArgs: {'user': 'DebugUser'}));
-      } catch (e, s) {
-        debugPrint('DEBUG: error while printing translations: $e');
-        debugPrint(s.toString());
-      }
-      // Also attempt to load the JSON file directly from assets to inspect its content.
-      // Use a post-frame callback to ensure the app stays alive long enough and
-      // context is stable.
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        try {
-          final lang = context.locale.languageCode;
-          final path = 'lib/core/localization/translation/$lang.json';
-          final raw = await rootBundle.loadString(path);
-          try {
-            final Map m = jsonDecode(raw) as Map;
-            debugPrint('DEBUG: loaded translation file $path top keys: ${m.keys.toList()}');
-            final login = m['login'];
-            debugPrint('DEBUG: login key from file: ${login != null}');
-            debugPrint('DEBUG: login.email raw=${login != null ? login['email'] : 'null'}');
-          } catch (e, s) {
-            debugPrint('DEBUG: error parsing $path: $e');
-            debugPrint(s.toString());
-          }
-        } catch (e, s) {
-          debugPrint('DEBUG: error loading translation asset: $e');
-          debugPrint(s.toString());
-        }
-      });
+    // Use a single MaterialApp instance for the whole lifetime of the app.
+    // Switching between different MaterialApp instances can cause a
+    // brief white frame on some devices. Instead pick the home widget
+    // dynamically while keeping the same app/theme widgets.
+    Widget homeWidget;
+    if (_loading || _showSplash) {
+      homeWidget = const SplashScreen();
+    } else {
+      homeWidget = _savedLocale == null
+          ? const SplashLanguageScreen()
+          : const MyHomePage(title: 'Flutter Demo Home Page');
     }
+
     return MaterialApp(
-      title: 'Gra Miejska',
-      theme: ThemeData.dark(),
-      home: _savedLocale == null ? const SplashLanguageScreen() : const MyHomePage(title: 'Gra Miejska'),
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF181818),
+        fontFamily: 'Roboto',
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(fontFamily: 'Roboto'),
+          bodyMedium: TextStyle(fontFamily: 'Roboto'),
+          bodySmall: TextStyle(fontFamily: 'Roboto'),
+          titleLarge: TextStyle(fontFamily: 'Roboto'),
+          titleMedium: TextStyle(fontFamily: 'Roboto'),
+          titleSmall: TextStyle(fontFamily: 'Roboto'),
+        ),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+          surface: const Color(0xFF181818),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.resolveWith<Color?>((
+              states,
+            ) {
+              if (states.contains(MaterialState.pressed))
+                return Colors.deepPurple;
+              return Colors.grey; // default
+            }),
+            foregroundColor: MaterialStateProperty.resolveWith<Color?>((
+              states,
+            ) {
+              // Keep text readable on both backgrounds
+              return Colors.white;
+            }),
+            shape: MaterialStateProperty.all(
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            textStyle: MaterialStateProperty.all(
+              const TextStyle(
+                inherit: false,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                fontFamily: 'Roboto',
+              ),
+            ),
+            padding: MaterialStateProperty.all(
+              const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+          ),
+        ),
+        iconButtonTheme: IconButtonThemeData(
+          style: ButtonStyle(
+            foregroundColor: MaterialStateProperty.resolveWith<Color?>((
+              states,
+            ) {
+              if (states.contains(MaterialState.pressed))
+                return Colors.deepPurple;
+              return Colors.grey;
+            }),
+          ),
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          filled: true,
+          fillColor: Color(0xFF232323),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+          labelStyle: TextStyle(color: Colors.white70, fontFamily: 'Roboto'),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF232323),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          titleTextStyle: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      home: homeWidget,
+      routes: {
+        '/login': (context) => LoginScreen(),
+        '/register': (context) => RegisterScreen(),
+        '/games': (context) => const GameListScreen(),
+        '/intro': (context) => const GameIntroScreen(),
+        '/faction': (context) => const FactionSelectionScreen(),
+        '/map': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          final faction = args != null ? args['faction'] as String? : null;
+          return GameMapScreen(returnRoute: '/intro', faction: faction);
+        },
+        '/choice': (context) => const ChoiceGameScreen(),
+        '/text_challenge': (context) => const TextChallengeScreen(),
+        '/inventory': (context) => const InventoryScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/mission': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          final id = args != null ? args['id'] as String? : null;
+          return MissionRunnerScreen(missionId: id ?? 'a1');
+        },
+        '/home': (context) {
+          // Pobierz ostatniego użytkownika z SharedPreferences
+          final prefs = SharedPreferences.getInstance();
+          // Uwaga: to jest Future, więc musimy użyć FutureBuilder
+          return FutureBuilder<SharedPreferences>(
+            future: prefs,
+            builder: (context, snapshot) {
+              // HomeScreen now loads user internally
+              return const HomeScreen();
+            },
+          );
+        },
+        // Add more routes as needed
+      },
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
@@ -131,7 +231,11 @@ class SplashLanguageScreen extends StatelessWidget {
     await prefs.setString('locale_code', code);
     await context.setLocale(Locale(code));
     if (!context.mounted) return;
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const MyHomePage(title: 'Gra Miejska')));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => const MyHomePage(title: 'Flutter Demo Home Page'),
+      ),
+    );
   }
 
   @override
@@ -141,9 +245,18 @@ class SplashLanguageScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(onPressed: () => _setLocale(context, 'pl'), child: const Text('POLSKI')),
-            ElevatedButton(onPressed: () => _setLocale(context, 'en'), child: const Text('ENGLISH')),
-            ElevatedButton(onPressed: () => _setLocale(context, 'de'), child: const Text('DEUTSCH')),
+            ElevatedButton(
+              onPressed: () => _setLocale(context, 'pl'),
+              child: const Text('POLSKI'),
+            ),
+            ElevatedButton(
+              onPressed: () => _setLocale(context, 'en'),
+              child: const Text('ENGLISH'),
+            ),
+            ElevatedButton(
+              onPressed: () => _setLocale(context, 'de'),
+              child: const Text('DEUTSCH'),
+            ),
           ],
         ),
       ),
@@ -161,9 +274,34 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  // int _counter = 0;
   final TextEditingController _emailController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    _loadLastUser();
+  }
+
+  Future<void> _loadLastUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastUser = prefs.getString('last_user');
+    if (lastUser != null && lastUser.isNotEmpty) {
+      _emailController.text = lastUser;
+    }
+  }
+
   final TextEditingController _passwordController = TextEditingController();
-  bool _showRegister = false;
+  final TextEditingController _repeatPasswordController =
+      TextEditingController();
+  final FocusNode _loginFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _repeatFocus = FocusNode();
+  bool _isLogin = true;
+  String? _errorMessage;
+  String? _successMessage;
+  bool _loading = false;
+
+  // void _incrementCounter() {}
 
   void _changeLanguage(BuildContext context, String code) async {
     final prefs = await SharedPreferences.getInstance();
@@ -172,95 +310,218 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  void _toggleMode() {
+    setState(() {
+      _isLogin = !_isLogin;
+      _errorMessage = null;
+      _successMessage = null;
+      _emailController.clear();
+      _passwordController.clear();
+      _repeatPasswordController.clear();
+    });
+    FocusScope.of(context).requestFocus(_loginFocus);
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _errorMessage = null;
+      _successMessage = null;
+      _loading = true;
+    });
+    final login = _emailController.text.trim();
+    final password = _passwordController.text;
+    final repeatPassword = _repeatPasswordController.text;
+    if (login.isEmpty || login.length < 3) {
+      setState(() {
+        _errorMessage = 'Podaj login (min. 3 znaki)';
+        _loading = false;
+      });
+      return;
+    }
+    if (password.length < 6) {
+      setState(() {
+        _errorMessage = 'Hasło musi mieć min. 6 znaków';
+        _loading = false;
+      });
+      return;
+    }
+    if (!_isLogin && password != repeatPassword) {
+      setState(() {
+        _errorMessage = 'Hasła nie są takie same';
+        _loading = false;
+      });
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    // Zapamiętaj ostatniego użytkownika
+    await prefs.setString('last_user', login);
+    final users = prefs.getStringList('users') ?? [];
+    // Format: login:password (plain, demo only; w produkcji - hash!)
+    if (_isLogin) {
+      final found = users.any((u) {
+        final parts = u.split(':');
+        return parts.length == 2 && parts[0] == login && parts[1] == password;
+      });
+      setState(() {
+        _loading = false;
+        if (found) {
+          _successMessage = 'Zalogowano pomyślnie!';
+        } else {
+          _errorMessage = 'Nieprawidłowy login lub hasło';
+        }
+      });
+      if (found) {
+        // Navigate to HomeScreen after successful login
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } else {
+      final exists = users.any((u) => u.split(':').first == login);
+      if (exists) {
+        setState(() {
+          _errorMessage = 'Użytkownik o tym loginie już istnieje';
+          _loading = false;
+        });
+        return;
+      }
+      users.add('$login:$password');
+      await prefs.setStringList('users', users);
+      setState(() {
+        _successMessage =
+            'Rejestracja zakończona sukcesem! Możesz się zalogować.';
+        _isLogin = true;
+        _loading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(_isLogin ? 'Logowanie' : 'Rejestracja'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Ustawienia',
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.language),
             onSelected: (code) => _changeLanguage(context, code),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'pl', child: Text('POLSKI')),
-              PopupMenuItem(value: 'en', child: Text('ENGLISH')),
-              PopupMenuItem(value: 'de', child: Text('DEUTSCH')),
+            itemBuilder: (context) => [
+              PopupMenuItem(value: 'pl', child: const Text('POLSKI')),
+              PopupMenuItem(value: 'en', child: const Text('ENGLISH')),
+              PopupMenuItem(value: 'de', child: const Text('DEUTSCH')),
             ],
           ),
         ],
       ),
       body: Center(
-        child: SingleChildScrollView(child: _showRegister ? _buildRegisterForm(context) : _buildLoginForm(context)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                _isLogin ? 'Witaj ponownie!' : 'Załóż nowe konto',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: TextField(
+                  controller: _emailController,
+                  focusNode: _loginFocus,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) =>
+                      FocusScope.of(context).requestFocus(_passwordFocus),
+                  decoration: const InputDecoration(labelText: 'Login'),
+                  autofillHints: const [AutofillHints.username],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: TextField(
+                  controller: _passwordController,
+                  focusNode: _passwordFocus,
+                  obscureText: true,
+                  textInputAction: _isLogin
+                      ? TextInputAction.done
+                      : TextInputAction.next,
+                  onSubmitted: (_) {
+                    if (_isLogin) {
+                      _submit();
+                    } else {
+                      FocusScope.of(context).requestFocus(_repeatFocus);
+                    }
+                  },
+                  decoration: const InputDecoration(labelText: 'Hasło'),
+                  autofillHints: const [AutofillHints.password],
+                ),
+              ),
+              if (!_isLogin)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: TextField(
+                    controller: _repeatPasswordController,
+                    focusNode: _repeatFocus,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submit(),
+                    decoration: const InputDecoration(
+                      labelText: 'Powtórz hasło',
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              if (_successMessage != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    _successMessage!,
+                    style: const TextStyle(color: Colors.green),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              _loading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _submit,
+                      child: Text(
+                        _isLogin
+                            ? 'login.button'.tr().toUpperCase()
+                            : 'register.button'.tr().toUpperCase(),
+                      ),
+                    ),
+              TextButton(
+                onPressed: _toggleMode,
+                child: Text(
+                  _isLogin
+                      ? 'login.no_account'.tr().toUpperCase()
+                      : 'MASZ JUŻ KONTO? ZALOGUJ SIĘ',
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    );
-  }
-
-  Widget _buildLoginForm(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-  Text('home.welcome'.tr(namedArgs: {'user': _emailController.text.isNotEmpty ? _emailController.text : 'Użytkowniku'})),
-        const SizedBox(height: 32),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: TextField(controller: _emailController, decoration: InputDecoration(labelText: 'login.email'.tr())),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: TextField(controller: _passwordController, obscureText: true, decoration: InputDecoration(labelText: 'login.password'.tr())),
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(onPressed: () {}, child: Text('login.button'.tr())),
-        TextButton(onPressed: () => setState(() => _showRegister = true), child: Text('login.no_account'.tr())),
-      ],
-    );
-  }
-
-  final TextEditingController _registerEmailController = TextEditingController();
-  final TextEditingController _registerPasswordController = TextEditingController();
-
-  Widget _buildRegisterForm(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Text('register.title'.tr()),
-        const SizedBox(height: 32),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: TextField(controller: _registerEmailController, decoration: InputDecoration(labelText: 'login.email'.tr())),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: TextField(controller: _registerPasswordController, obscureText: true, decoration: InputDecoration(labelText: 'login.password'.tr())),
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: () async {
-            final email = _registerEmailController.text.trim();
-            final password = _registerPasswordController.text.trim();
-            if (email.isEmpty || password.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('login.error'.tr())));
-              return;
-            }
-            try {
-              await LocalStorageService.saveUser(email, password);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('register.success'.tr())));
-              setState(() {
-                _showRegister = false;
-                _emailController.text = email;
-                _passwordController.text = '';
-                _registerEmailController.clear();
-                _registerPasswordController.clear();
-              });
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('login.error'.tr())));
-            }
-          },
-          child: Text('register.button'.tr()),
-        ),
-        TextButton(onPressed: () => setState(() => _showRegister = false), child: Text('login.button'.tr())),
-      ],
     );
   }
 }
 
+// SplashScreen widget (top-level)
+
+// ...existing code...

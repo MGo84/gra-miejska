@@ -1,12 +1,12 @@
 [
   {
     "id": 1,
-    "name": "Plac Or³a Bia³ego",
+    "name": "Plac Orï¿½a Biaï¿½ego",
     "lat": 53.428,
     "lng": 14.553,
     "type": "quiz",
-    "question": "Jakie zwierzê jest w herbie Polski?",
-    "answers": ["Lew", "Orze³", "Wilk", "¯ubr"],
+    "question": "Jakie zwierzï¿½ jest w herbie Polski?",
+    "answers": ["Lew", "Orzeï¿½", "Wilk", "ï¿½ubr"],
     "correct": 1
   },
   {
@@ -15,7 +15,7 @@
     "lat": 53.427,
     "lng": 14.551,
     "type": "text",
-    "question": "Jak ma na imiê Mickiewicz?",
+    "question": "Jak ma na imiï¿½ Mickiewicz?",
     "correct_text": "Adam"
   }
 ]

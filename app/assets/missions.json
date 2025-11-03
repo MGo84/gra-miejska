@@ -1,0 +1,53 @@
+[
+  {
+    "id": "a1",
+    "titleKey": "missions.a1.title",
+    "steps": [
+      {
+        "id": "a1_tekst1",
+        "type": "text",
+        "contentKey": "a1_tekst1"
+      },
+      {
+        "id": "a1_pytanie1",
+        "type": "question",
+        "contentKey": "a1_pytanie1",
+        "options": {
+          "A": "a1_odpowiedz_a1",
+          "B": "a1_odpowiedz_b1",
+          "C": "a1_odpowiedz_c1",
+          "D": "a1_odpowiedz_d1"
+        },
+        "correctOption": "A"
+      },
+      {
+        "id": "a1_tekst2",
+        "type": "text",
+        "contentKey": "a1_tekst2"
+      }
+    ]
+  },
+  {
+    "id": "b1",
+    "titleKey": "missions.b1.title",
+    "steps": [
+      {
+        "id": "b1_tekst1",
+        "type": "text",
+        "contentKey": "b1_tekst1"
+      },
+      {
+        "id": "b1_pytanie1",
+        "type": "question",
+        "contentKey": "b1_pytanie1",
+        "options": {
+          "A": "b1_odpowiedz_a1",
+          "B": "b1_odpowiedz_b1",
+          "C": "b1_odpowiedz_c1",
+          "D": "b1_odpowiedz_d1"
+        },
+        "correctOption": "C"
+      }
+    ]
+  }
+]

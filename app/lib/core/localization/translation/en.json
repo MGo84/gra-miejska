@@ -19,11 +19,17 @@
 		"details": "Game details",
 		"duration": "Duration: {min} min",
 		"points": "Points: {points}",
-		"start": "Start game",
+	"start": "New Adventure",
+	"resume": "Return to adventure",
 		"map": "Show on map"
 	},
-	"map": {
-		"title": "Game map",
-		"close": "Close"
-	}
+		"map": {
+			"title": "Game map",
+			"close": "Close"
+		},
+		"intro": {
+			"part1": "The night in Szczecin has its own scent. A mix of the old Oder river, overheated asphalt, and something that has no name. When the phone rings, you think it's a mistake.",
+			"part2": "small pile small pile small pile small pile small pile small pile small pile small pile small pile small pile",
+			"next": "Next"
+		}
 }

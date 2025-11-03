@@ -19,11 +19,42 @@
     "details": "Szczegóły gry",
     "duration": "Czas trwania: {min} min",
     "points": "Punkty: {points}",
-    "start": "Rozpocznij grę",
+  "start": "Nowa Przygoda",
+  "resume": "Powrót do przygody",
     "map": "Zobacz na mapie"
   },
   "map": {
     "title": "Mapa gry",
     "close": "Zamknij"
+  },
+  "intro": {
+    "part1": "Szczecin — miasto zabytków i kultury, zwycięstw sportowców, sukcesów przemysłowców i odkryć naukowców. Radość dzieci, codzienny cud narodzin. Miasto ludzi i ŻYCIA...",
+    "part2": "Szczecin — pożar Kaskady, katastrofa tramwaju linii 6, wypadek podczas defilady, cierpienie Sydonii, wojny... ŚMIERĆ i MROK.",
+    "part3": "Szczecin — miasto wielu kultur: germańskiej, słowiańskiej, nordyckiej. Wraz z ludźmi przybyły też mroczne istoty: demony, strzygi, wampiry i wszelkiej maści potwory. To one stoją za niektórymi z tych strasznych wydarzeń. Jaka przyszłość czeka to miasto? Wieki mroku czy wieki świetności? Czy zwyciężą ludzie, czy władcy śmierci? To zależy od ciebie i od tego, po której stronie staniesz.",
+    "next": "Dalej"
   }
+  ,
+  "missions": {
+    "title": "Misje",
+    "a1": { "title": "Misja A1: Tajemnice Starego Szczecina" },
+    "b1": { "title": "Misja B1: Cienie nad portem" }
+  },
+  "missions_ui": {
+    "list_label": "Misje",
+    "start": "Start",
+    "demo_subtitle": "Krótka misja demonstracyjna"
+  },
+  "a1_tekst1": "Stoisz na moście nad dawną rzeką. Wokół ruiny i porzucone domy. Słyszysz szept o tajemnicy...",
+  "a1_pytanie1": "Które miejsce wydaje się najbezpieczniejsze do schronienia?",
+  "a1_odpowiedz_a1": "Stara katedra",
+  "a1_odpowiedz_b1": "Opuszczony magazyn przy nabrzeżu",
+  "a1_odpowiedz_c1": "Rozświetlony rynek",
+  "a1_odpowiedz_d1": "Tunel metra",
+  "a1_tekst2": "Decyzja zapadła. Ruszasz dalej, a miasto obserwuje twoje kroki.",
+  "b1_tekst1": "Noc na nabrzeżu. Fale uderzają o pale. Ktoś zostawił porzucony list.",
+  "b1_pytanie1": "Co robisz z znalezionym listem?",
+  "b1_odpowiedz_a1": "Zabieram i czytam",
+  "b1_odpowiedz_b1": "Zostawiam na miejscu",
+  "b1_odpowiedz_c1": "Zgłaszam na posterunku",
+  "b1_odpowiedz_d1": "Spalam go"
 }

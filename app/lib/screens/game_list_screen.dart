@@ -4,6 +4,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/game.dart';
 import '../data/mock_games.dart';
 import 'game_detail_screen.dart';
+import '../../core/widgets/game_status_bar.dart';
+import 'package:provider/provider.dart';
+import '../providers/game_progress_provider.dart';
 
 class GameListScreen extends StatefulWidget {
   const GameListScreen({super.key});
@@ -32,7 +35,9 @@ class _GameListScreenState extends State<GameListScreen> {
     }
 
     // wczytaj gry z Hive
-    final loadedGames = box.values.map((e) => Game.fromMap(Map<String, dynamic>.from(e))).toList();
+    final loadedGames = box.values
+        .map((e) => Game.fromMap(Map<String, dynamic>.from(e)))
+        .toList();
 
     setState(() {
       games = loadedGames;
@@ -42,7 +47,23 @@ class _GameListScreenState extends State<GameListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('games.list'.tr())),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(56),
+        child: Builder(
+          builder: (context) {
+            final gp = context.watch<GameProgressProvider>();
+            final playerName = gp.progress?.username ?? 'Zalogowany';
+            return GameStatusBar(
+              timerSeconds: 0,
+              points: 23,
+              level: 2,
+              hint: 'Podpowiedź',
+              playerName: playerName,
+              missionName: 'Lista gier',
+            );
+          },
+        ),
+      ),
       body: ListView.builder(
         itemCount: games.length,
         itemBuilder: (context, index) {
@@ -54,13 +75,15 @@ class _GameListScreenState extends State<GameListScreen> {
               subtitle: Text(
                 '${game.description}\n'
                 '${'games.duration'.tr(namedArgs: {'min': game.durationMinutes.toString()})} | '
-                '${'games.points'.tr(namedArgs: {'points': game.points.toString()})}'
+                '${'games.points'.tr(namedArgs: {'points': game.points.toString()})}',
               ),
               isThreeLine: true,
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => GameDetailScreen(game: game)),
+                  MaterialPageRoute(
+                    builder: (_) => GameDetailScreen(game: game),
+                  ),
                 );
               },
             ),

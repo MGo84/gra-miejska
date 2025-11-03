@@ -21,9 +21,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       await LocalStorageService.saveUser(email, password);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('register.success'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('register.success'.tr())));
 
       Navigator.pushReplacementNamed(context, '/login');
     }
@@ -32,6 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF181818),
       appBar: AppBar(title: Text('register.title'.tr())),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

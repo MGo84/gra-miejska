@@ -19,11 +19,17 @@
 		"details": "Spieldetails",
 		"duration": "Dauer: {min} Min",
 		"points": "Punkte: {points}",
-		"start": "Spiel starten",
+	"start": "Neues Abenteuer",
+	"resume": "Zurück zum Abenteuer",
 		"map": "Auf der Karte anzeigen"
 	},
-	"map": {
-		"title": "Spielkarte",
-		"close": "Schließen"
-	}
+		"map": {
+			"title": "Spielkarte",
+			"close": "Schließen"
+		},
+		"intro": {
+			"part1": "Die Nacht in Stettin hat ihren eigenen Geruch. Eine Mischung aus der alten Oder, überhitztem Asphalt und etwas, das keinen Namen hat. Wenn das Telefon klingelt, denkst du, es ist ein Irrtum.",
+			"part2": "kleiner Haufen kleiner Haufen kleiner Haufen kleiner Haufen kleiner Haufen kleiner Haufen kleiner Haufen kleiner Haufen kleiner Haufen kleiner Haufen",
+			"next": "Weiter"
+		}
 }

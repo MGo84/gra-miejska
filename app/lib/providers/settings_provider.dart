@@ -1,72 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+class SettingsProvider extends ChangeNotifier {
+  static const _kNarrationKey = 'narration_enabled';
 
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
+  bool _narrationEnabled = true;
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  bool get narrationEnabled => _narrationEnabled;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _controller.forward();
+  SettingsProvider() {
+    _load();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    _narrationEnabled = prefs.getBool(_kNarrationKey) ?? true;
+    notifyListeners();
   }
 
-  void _goToLogin() {
-    Navigator.pushReplacementNamed(context, '/login');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.indigo.shade50,
-      body: Center(
-        child: FadeTransition(
-          opacity: _animation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/logo.png',
-                width: 160,
-                height: 160,
-              ),
-              const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: _goToLogin,
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Start',
-                  style: TextStyle(fontSize: 20),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  Future<void> setNarrationEnabled(bool enabled) async {
+    _narrationEnabled = enabled;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kNarrationKey, enabled);
   }
 }

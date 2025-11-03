@@ -1,73 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/settings_provider.dart';
+import '../providers/game_progress_provider.dart';
+import '../models/game_progress.dart';
 import '../services/local_storage_service.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class _SettingsScreenState extends State<SettingsScreen> {
+  late TextEditingController _usernameController;
+  String? _storedLoginHint;
 
-  Future<void> _register() async {
-    if (_formKey.currentState!.validate()) {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
+  @override
+  void initState() {
+    super.initState();
+    _usernameController = TextEditingController();
+    _loadInitialValues();
+  }
 
-      await LocalStorageService.saveUser(email, password);
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    super.dispose();
+  }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rejestracja zakończona sukcesem!')),
-      );
+  Future<void> _loadInitialValues() async {
+    final gp = context.read<GameProgressProvider>();
+    final stored = await LocalStorageService.getUser();
+    final prefs = await SharedPreferences.getInstance();
+    final displayName = prefs.getString('display_name');
 
-      Navigator.pushReplacementNamed(context, '/login');
-    }
+    setState(() {
+      _storedLoginHint = stored['email'];
+      _usernameController.text = displayName ?? gp.progress?.username ?? '';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final gp = context.watch<GameProgressProvider>();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Rejestracja')),
+      appBar: AppBar(title: const Text('Ustawienia')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Login'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Podaj login';
-                  }
-                  return null;
-                },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SwitchListTile(
+              title: const Text('Tryb narracji'),
+              subtitle: const Text('Włącz/wyłącz narrację (overlay)'),
+              value: settings.narrationEnabled,
+              onChanged: (v) => settings.setNarrationEnabled(v),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Nazwa gracza',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: 'Nazwa gracza',
+                hintText: _storedLoginHint != null
+                    ? 'Aktualny login: $_storedLoginHint'
+                    : null,
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Hasło'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Podaj hasło';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _register,
-                child: const Text('Zarejestruj'),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () async {
+                final newName = _usernameController.text.trim();
+                final prefs = await SharedPreferences.getInstance();
+                // Save display name separately from login credentials
+                await prefs.setString('display_name', newName);
+                try {
+                  final existing = gp.progress;
+                  final updated = GameProgress(
+                    currentScreen: existing?.currentScreen ?? '/home',
+                    currentArgs: existing?.currentArgs,
+                    solvedPoints: existing?.solvedPoints ?? [],
+                    inventory: existing?.inventory ?? [],
+                    username: newName,
+                  );
+                  final provider = context.read<GameProgressProvider>();
+                  await provider.save(updated);
+                } catch (_) {}
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Zapisano nazwę gracza')),
+                );
+              },
+              child: const Text('Zapisz nazwę'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Inne ustawienia (w przyszłości)...',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
         ),
       ),
     );
